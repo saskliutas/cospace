@@ -75,8 +75,24 @@ const init = async (cospaceDir = ".") => {
     }
   }
 
+  const cospaceName = path.basename(relativeDir)
+  const templateDir = path.join(__dirname, "./template");
+
   console.log(`\nCreating CoSpace in ${cospaceDir}...`);
-  await fs.copy(path.join(__dirname, "./template"), cospaceDir);
+  await fs.copy(templateDir, cospaceDir, { filter: (src) => !path.extname(src).includes("code-workspace")});
+
+  const pkgJsonData = await fs.readJSON(path.join(templateDir, PACKAGE_JSON));
+  await fs.writeJSON(
+    path.join(cospaceDir, PACKAGE_JSON), 
+    { ...pkgJsonData, name: cospaceName },
+    { spaces: 2 }
+  );
+
+  await fs.copy(
+    path.join(templateDir, "cospace.code-workspace"), 
+    path.join(cospaceDir, `${cospaceName}.code-workspace`)
+  );
+
   process.chdir(cospaceDir);
   await fs.mkdir("repos");
   try {
